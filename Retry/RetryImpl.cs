@@ -59,12 +59,17 @@ namespace Turtle
             while (ShouldRetry())
             {
                 context.Update();
+
                 if (toRetry())
                 {
                     completionState = CompletionState.Success;
                     break;
                 }
-                Thread.Sleep(retryStrategy.NextRetryDelay(context));
+
+                if (ShouldRetry())
+                {
+                    Thread.Sleep(retryStrategy.NextRetryDelay(context));
+                }
             }
 
             return completionState;
