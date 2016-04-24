@@ -45,6 +45,7 @@
     <Compile Include="IRetryContext.cs" />
     <Compile Include="LimitedExponentialBackofRetryStrategy.cs" />
     <Compile Include="RetryContext.cs" />
+    <Compile Include="RetryExtention.cs" />
     <Compile Include="RetryImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RetryStrategyBase.cs" />

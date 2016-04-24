@@ -4,24 +4,6 @@ using System.Threading.Tasks;
 
 namespace Turtle
 {
-    public static class RetryExtention
-    {
-        public static RetryImpl Retry(this Action toRetry)
-        {
-            return new RetryImpl(toRetry);
-        }
-
-        public static RetryImpl Retry(this Func<bool> toRetry)
-        {
-            return new RetryImpl(toRetry);
-        }
-
-        public static RetryImpl Retry(this Action toRetry, Func<bool> didSucceedPredicate)
-        {
-            return new RetryImpl(toRetry, didSucceedPredicate);
-        }
-    }
-
     public class RetryImpl
     {
         private readonly Func<bool> toRetry;
@@ -32,22 +14,6 @@ namespace Turtle
         {
             RetryDelay = TimeSpan.FromMilliseconds(100),
         };
-
-        public RetryImpl(Action retry, Func<bool> isDonePredicate)
-        {
-            toRetry = () =>
-            {
-                try
-                {
-                    retry();
-                    return isDonePredicate();
-                }
-                catch
-                {
-                    return false;
-                }
-            };
-        }
 
         public RetryImpl(Action retry)
         {
@@ -68,6 +34,22 @@ namespace Turtle
         public RetryImpl(Func<bool> retry)
         {
             toRetry = retry;
+        }
+
+        public RetryImpl(Action retry, Func<bool> isDonePredicate)
+        {
+            toRetry = () =>
+            {
+                try
+                {
+                    retry();
+                    return isDonePredicate();
+                }
+                catch
+                {
+                    return false;
+                }
+            };
         }
 
         public CompletionState Run()
