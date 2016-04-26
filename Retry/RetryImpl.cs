@@ -77,10 +77,16 @@ namespace Turtle
 
         public async Task<CompletionState> RunAsync()
         {
+            return await RunAsync(new CancellationToken());
+        }
+
+        public async Task<CompletionState> RunAsync(CancellationToken token)
+        {
             var completionState = CompletionState.Failed;
 
             while (completionState == CompletionState.Failed)
             {
+                token.ThrowIfCancellationRequested();
                 context.Update();
                 if (!ShouldRetry())
                 {
@@ -88,11 +94,11 @@ namespace Turtle
                 }
 
                 completionState = await Task.Factory.StartNew(
-                    () => toRetry() ? CompletionState.Success : CompletionState.Failed);
+                    () => toRetry() ? CompletionState.Success : CompletionState.Failed, token);
 
                 if (completionState == CompletionState.Failed && ShouldRetry())
                 {
-                    await Task.Delay(retryStrategy.NextRetryDelay(context));
+                    await Task.Delay(retryStrategy.NextRetryDelay(context), token);
                 }
             }
 

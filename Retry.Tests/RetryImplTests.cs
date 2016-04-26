@@ -152,7 +152,7 @@ namespace Turtle.Tests
             {
                 // Arrange
                 var argumentPassedToTaskDelay = new TimeSpan();
-                ShimTask.DelayTimeSpan = t =>
+                ShimTask.DelayTimeSpanCancellationToken = (t, c) =>
                 {
                     argumentPassedToTaskDelay = t;
                     return Task.CompletedTask;
@@ -165,10 +165,10 @@ namespace Turtle.Tests
                     RetryDelay = TimeSpan.FromMilliseconds(1337)
                 })
                      .MaximumNumberOfTries(2)
-                     .Run();
+                     .RunAsync().Wait();
 
                 // Assert
-                Assert.AreEqual(1337, argumentPassedToTaskDelay);
+                Assert.AreEqual(TimeSpan.FromMilliseconds(1337), argumentPassedToTaskDelay);
             }
         }
 
@@ -210,7 +210,7 @@ namespace Turtle.Tests
             {
                 // Arrange
                 var taskDelayCallCount = 0;
-                ShimTask.DelayTimeSpan = t =>
+                ShimTask.DelayTimeSpanCancellationToken = (t, c) =>
                 {
                     taskDelayCallCount += 1;
                     return Task.CompletedTask;
@@ -235,7 +235,6 @@ namespace Turtle.Tests
                 Assert.AreEqual(2, taskDelayCallCount);
             }
         }
-
 
         private void Throws()
         {
