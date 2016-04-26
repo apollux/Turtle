@@ -90,7 +90,7 @@ namespace Turtle
                 completionState = await Task.Factory.StartNew(
                     () => toRetry() ? CompletionState.Success : CompletionState.Failed);
 
-                if (completionState == CompletionState.Failed)
+                if (completionState == CompletionState.Failed && ShouldRetry())
                 {
                     await Task.Delay(retryStrategy.NextRetryDelay(context));
                 }

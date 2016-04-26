@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Threading.Fakes;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Fakes;
 using Microsoft.QualityTools.Testing.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,15 +13,62 @@ namespace Turtle.Tests
         [TestMethod]
         public void Run_ActionSucceeds_ExecuteOnce()
         {
-            // Arrange
-            var callCount = 0;
-            var retry = new RetryImpl((() => callCount += 1));
+            using (ShimsContext.Create())
+            {
+                // Arrange
+                ShimThread.SleepInt32 = i => { };
+                var callCount = 0;
+                var retry = new RetryImpl(() => callCount += 1);
 
-            // Act
-            retry.Run();
+                // Act
+                retry.Run();
 
-            // Assert
-            Assert.AreEqual(1, callCount);
+                // Assert
+                Assert.AreEqual(1, callCount);
+            }
+        }
+
+        [TestMethod]
+        public void Run_FuncSucceeds_ExecuteOnce()
+        {
+            using (ShimsContext.Create())
+            {
+                // Arrange
+                ShimThread.SleepInt32 = i => { };
+                var callCount = 0;
+                var retry = new RetryImpl(() =>
+                {
+                    callCount += 1;
+                    return true;
+                });
+
+                // Act
+                retry.Run();
+
+                // Assert
+                Assert.AreEqual(1, callCount);
+            }
+        }
+
+        [TestMethod]
+        public void Run_FuncWithPredicateSucceeds_ExecuteOnce()
+        {
+            using (ShimsContext.Create())
+            {
+                // Arrange
+                ShimThread.SleepInt32 = i => { };
+                var callCount = 0;
+                var retry = new RetryImpl(() =>
+                {
+                    callCount += 1;
+                }, () => true);
+
+                // Act
+                retry.Run();
+
+                // Assert
+                Assert.AreEqual(1, callCount);
+            }
         }
 
         [TestMethod]
@@ -97,6 +146,33 @@ namespace Turtle.Tests
         }
 
         [TestMethod]
+        public void Using_ActionFails_TaskDelayCalledWithCorrectValue()
+        {
+            using (ShimsContext.Create())
+            {
+                // Arrange
+                var argumentPassedToTaskDelay = new TimeSpan();
+                ShimTask.DelayTimeSpan = t =>
+                {
+                    argumentPassedToTaskDelay = t;
+                    return Task.CompletedTask;
+                };
+                var retry = new RetryImpl(() => Throws());
+
+                // Act
+                retry.Using(new ConstantWaitTimeRetryStrategy
+                {
+                    RetryDelay = TimeSpan.FromMilliseconds(1337)
+                })
+                     .MaximumNumberOfTries(2)
+                     .Run();
+
+                // Assert
+                Assert.AreEqual(1337, argumentPassedToTaskDelay);
+            }
+        }
+
+        [TestMethod]
         public void Run_ActionSucceedsThirdTime_ThreadSleepCalledTwoTimes()
         {
             using (ShimsContext.Create())
@@ -126,6 +202,40 @@ namespace Turtle.Tests
                 Assert.AreEqual(2, sleepInvokeCounter);
             }
         }
+
+        [TestMethod]
+        public void RunAsync_ActionSucceedsThirdTime_TaskDelayCalledTwoTimes()
+        {
+            using (ShimsContext.Create())
+            {
+                // Arrange
+                var taskDelayCallCount = 0;
+                ShimTask.DelayTimeSpan = t =>
+                {
+                    taskDelayCallCount += 1;
+                    return Task.CompletedTask;
+                };
+
+                var callCount = 0;
+                var retry = new RetryImpl((() =>
+                {
+                    callCount += 1;
+                    if (callCount == 3)
+                    {
+                        return; // success
+                    }
+
+                    Throws();
+                }));
+
+                // Act
+                retry.RunAsync().Wait();
+
+                // Assert
+                Assert.AreEqual(2, taskDelayCallCount);
+            }
+        }
+
 
         private void Throws()
         {
