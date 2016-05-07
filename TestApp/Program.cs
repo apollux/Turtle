@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Threading;
 using Turtle;
 
 namespace TestApp
 {
-    class Program
+    static class Program
     {
-        private static void Main(string[] args)
+        private static void Main()
         {
             Retry.This(() =>
             {
@@ -54,6 +55,23 @@ namespace TestApp
 
             Action a = (() => { Console.WriteLine("extension"); Throws(); });
             a.Retry().MaximumNumberOfTries(10).Run();
+
+
+            var tokenSource = new CancellationTokenSource();
+            var t = Retry.This(() =>
+            {
+                Console.WriteLine("async");
+                Throws();
+            }).RunAsync(tokenSource.Token);
+
+            tokenSource.CancelAfter(TimeSpan.FromSeconds(2));
+
+            try
+            {
+                t.Wait(tokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {}
 
             Console.ReadLine();
         }
