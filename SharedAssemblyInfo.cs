@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("ApolluX")]
 [assembly: AssemblyProduct("Turtle")]
 [assembly: AssemblyCopyright("Copyright © ApolluX 2016")]
 [assembly: AssemblyTrademark("")]
