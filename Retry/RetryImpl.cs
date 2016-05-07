@@ -58,8 +58,6 @@ namespace Turtle
 
             while (ShouldRetry())
             {
-                context.Update();
-
                 if (toRetry())
                 {
                     completionState = CompletionState.Success;
@@ -70,6 +68,8 @@ namespace Turtle
                 {
                     Thread.Sleep(retryStrategy.NextRetryDelay(context));
                 }
+
+                context.Update();
             }
 
             return completionState;
@@ -86,8 +86,6 @@ namespace Turtle
 
             while (completionState == CompletionState.Failed)
             {
-                token.ThrowIfCancellationRequested();
-                context.Update();
                 if (!ShouldRetry())
                 {
                     break;
@@ -100,6 +98,8 @@ namespace Turtle
                 {
                     await Task.Delay(retryStrategy.NextRetryDelay(context), token);
                 }
+
+                context.Update();
             }
 
             return completionState;

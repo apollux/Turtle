@@ -10,7 +10,8 @@ namespace Turtle
         protected override TimeSpan GetRetryDelay(IRetryContext context)
         {
             return TimeSpan.FromMilliseconds(
-                Math.Min((2 ^ context.Count) * BaseDelay.TotalMilliseconds, MaxDelay.TotalMilliseconds));
+                Math.Min((int) Math.Pow(2, context.Count) * BaseDelay.TotalMilliseconds,
+                MaxDelay.TotalMilliseconds));
         }
     }
 }
