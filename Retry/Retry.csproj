@@ -46,7 +46,7 @@
     <Compile Include="CompletionState.cs" />
     <Compile Include="ConstantWaitTimeRetryStrategy.cs" />
     <Compile Include="IRetryContext.cs" />
-    <Compile Include="LimitedExponentialBackofRetryStrategy.cs" />
+    <Compile Include="LimitedExponentialBackoffRetryStrategy.cs" />
     <Compile Include="RetryContext.cs" />
     <Compile Include="RetryExtention.cs" />
     <Compile Include="RetryImpl.cs" />

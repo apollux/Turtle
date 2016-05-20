@@ -37,7 +37,7 @@ Retry.This(() =>
     Console.WriteLine("Hello");
     return false;
 })
-.Using(new LimitedExponentialBackofRetryStrategy
+.Using(new LimitedExponentialBackoffRetryStrategy
 {
     BaseDelay = TimeSpan.FromMilliseconds(50),
     MaxDelay = TimeSpan.FromSeconds(5)
@@ -45,7 +45,7 @@ Retry.This(() =>
 .MaximumNumberOfTries(5)
 .Run();
 ```
-This example uses a limited exponential backof strategy. The time wait between between tries increases exponentially.
+This example uses a limited exponential backoff strategy. The time wait between tries increases exponentially.
 
 
 ```C#  

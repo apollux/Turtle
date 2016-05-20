@@ -67,7 +67,7 @@
     </Compile>
     <Compile Include="RetryImplTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="LimitedExponentialBackofRetryStrategyTests.cs" />
+    <Compile Include="LimitedExponentialBackoffRetryStrategyTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Fakes Include="Fakes\System.fakes" />
