@@ -37,7 +37,7 @@ namespace TestApp
                 Console.WriteLine("Hello4");
                 return false;
             })
-                .Using(new LimitedExponentialBackofRetryStrategy
+                .Using(new LimitedExponentialBackoffRetryStrategy
                 {
                     BaseDelay = TimeSpan.FromMilliseconds(50),
                     MaxDelay = TimeSpan.FromSeconds(5)
