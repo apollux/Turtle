@@ -16,8 +16,7 @@ namespace Turtle
         };
 
         public RetryImpl(Action retry)
-        {
-            toRetry = () =>
+            : this(() =>
             {
                 try
                 {
@@ -28,17 +27,11 @@ namespace Turtle
                 {
                     return false;
                 }
-            };
-        }
-
-        public RetryImpl(Func<bool> retry)
-        {
-            toRetry = retry;
-        }
+            })
+        { }
 
         public RetryImpl(Action retry, Func<bool> isDonePredicate)
-        {
-            toRetry = () =>
+            : this(() =>
             {
                 try
                 {
@@ -49,7 +42,12 @@ namespace Turtle
                 {
                     return false;
                 }
-            };
+            })
+        { }
+
+        public RetryImpl(Func<bool> retry)
+        {
+            toRetry = retry;
         }
 
         public CompletionState Run()
