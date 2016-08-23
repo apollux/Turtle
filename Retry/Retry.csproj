@@ -43,10 +43,14 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="AfterExceptionBehavior.cs" />
     <Compile Include="CompletionState.cs" />
     <Compile Include="ConstantWaitTimeRetryStrategy.cs" />
+    <Compile Include="IExceptionBehavior.cs" />
     <Compile Include="IRetryContext.cs" />
     <Compile Include="LimitedExponentialBackoffRetryStrategy.cs" />
+    <Compile Include="RethrowAllExceptionBehavior.cs" />
+    <Compile Include="RetryAllExceptionBehavior.cs" />
     <Compile Include="RetryContext.cs" />
     <Compile Include="RetryExtention.cs" />
     <Compile Include="RetryImpl.cs" />

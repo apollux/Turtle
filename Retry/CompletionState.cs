@@ -3,6 +3,7 @@
     public enum CompletionState
     {
         Failed,
+        Aborted,
         Success
     };
 }
