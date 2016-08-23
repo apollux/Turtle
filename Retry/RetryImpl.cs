@@ -62,17 +62,12 @@ namespace Turtle
             {
                 completionState = Try();
 
-                if (completionState != CompletionState.Failed)
-                {
-                    break;
-                }
+                context.Update();
 
                 if (ShouldRetry())
                 {
                     Thread.Sleep(retryStrategy.NextRetryDelay(context));
                 }
-
-                context.Update();
             }
 
             return completionState;
@@ -91,17 +86,12 @@ namespace Turtle
             {
                 completionState = await Task.Factory.StartNew(Try, token);
 
-                if (completionState != CompletionState.Failed)
-                {
-                    break;
-                }
+                context.Update();
 
                 if (ShouldRetry())
                 {
                     await Task.Delay(retryStrategy.NextRetryDelay(context), token);
                 }
-
-                context.Update();
             }
 
             return completionState;
