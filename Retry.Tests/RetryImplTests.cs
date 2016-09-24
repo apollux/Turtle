@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Fakes;
 using Microsoft.QualityTools.Testing.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Turtle.Tests
 {
@@ -91,6 +92,28 @@ namespace Turtle.Tests
 
                 // Assert
                 Assert.AreEqual(5, callCount);
+            }
+        }
+
+        [TestMethod]
+        public void MaximumNumberOfTries_ActionKeepsFailing_SleptFourTimes()
+        {
+            using (ShimsContext.Create())
+            {
+                // Arrange
+                var sleepCount = 0;
+                ShimThread.SleepInt32 = i => { sleepCount += 1; };
+                var retry = new RetryImpl((() =>
+                {
+                    Throws();
+                }));
+
+                // Act
+                retry.MaximumNumberOfTries(5)
+                     .Run();
+
+                // Assert
+                Assert.AreEqual(4, sleepCount);
             }
         }
 
@@ -234,6 +257,88 @@ namespace Turtle.Tests
                 // Assert
                 Assert.AreEqual(2, taskDelayCallCount);
             }
+        }
+
+
+        [TestMethod]
+        public void Run_TryThrows_BehaviorOnExceptionIsCalled()
+        {
+            // Arrange
+            var mockedExceptionBehavior = new Mock<IExceptionBehavior>();
+
+            var retry = new RetryImpl(() =>
+            {
+                Throws();
+            }, mockedExceptionBehavior.Object);
+            retry.MaximumNumberOfTries(1);
+
+            // Act
+            retry.Run();
+
+            // Assert
+            mockedExceptionBehavior.Verify(behavior => behavior.OnException(It.IsAny<Exception>()), Times.Once);
+        }
+
+        [TestMethod]
+        public void RunAsync_TryThrows_BehaviorOnExceptionIsCalled()
+        {
+            // Arrange
+            var mockedExceptionBehavior = new Mock<IExceptionBehavior>();
+
+            var retry = new RetryImpl(() =>
+            {
+                Throws();
+            }, mockedExceptionBehavior.Object);
+            retry.MaximumNumberOfTries(1);
+
+            // Act
+            retry.RunAsync().Wait();
+
+            // Assert
+            mockedExceptionBehavior.Verify(behavior => behavior.OnException(It.IsAny<Exception>()), Times.Once);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(Exception))]
+        public void Run_TryThrowsBehaviorReturnsRethrow_ExceptionIsRethrown()
+        {
+            // Arrange
+            var retry = new RetryImpl(() =>
+            {
+                Throws();
+            });
+
+            retry.ExceptionBehavior(new RethrowAllExceptionBehavior());
+
+            // Act
+            retry.Run();
+
+            // Assert
+            // Expected exception
+        }
+
+        [TestMethod]
+        public void Run_TryThrowsBehaviorReturnsAbort_ShouldStopRetrying()
+        {
+            // Arrange
+            var tryCount = 0;
+            var mockedAbortExceptionBehavior = new Mock<IExceptionBehavior>();
+            mockedAbortExceptionBehavior.Setup(behavior => behavior.OnException(It.IsAny<Exception>()))
+                .Returns(AfterExceptionBehavior.Abort);
+
+            var retry = new RetryImpl((() =>
+            {
+                tryCount += 1;
+                Throws();
+            }));
+            retry.ExceptionBehavior(mockedAbortExceptionBehavior.Object);
+
+            // Act
+            var result = retry.Run();
+
+            // Assert
+            Assert.AreEqual(CompletionState.Aborted, result);
+            Assert.AreEqual(1, tryCount);
         }
 
         private void Throws()

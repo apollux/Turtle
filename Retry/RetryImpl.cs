@@ -7,7 +7,7 @@ namespace Turtle
     public class RetryImpl
     {
         private readonly Func<bool> toRetry;
-        private readonly IExceptionBehavior behavior;
+        private IExceptionBehavior behavior;
         private readonly RetryContext context = new RetryContext();
         private int maximumNumberOfTries = 0;
 
@@ -22,7 +22,15 @@ namespace Turtle
             : this(retry, new RetryAllExceptionBehavior())
         { }
 
-        public RetryImpl(Action retry, IExceptionBehavior behavior)
+        public RetryImpl(Action retry, Func<bool> isDonePredicate)
+            : this(retry, isDonePredicate, new RetryAllExceptionBehavior())
+        { }
+
+        public RetryImpl(Func<bool> retry)
+            : this(retry, new RethrowAllExceptionBehavior())
+        { }
+
+        internal RetryImpl(Action retry, IExceptionBehavior behavior)
             : this(() =>
             {
                 retry();
@@ -31,11 +39,7 @@ namespace Turtle
             }, behavior)
         { }
 
-        public RetryImpl(Action retry, Func<bool> isDonePredicate)
-            : this(retry, isDonePredicate, new RetryAllExceptionBehavior())
-        { }
-
-        public RetryImpl(Action retry, Func<bool> isDonePredicate, IExceptionBehavior behavior)
+        internal RetryImpl(Action retry, Func<bool> isDonePredicate, IExceptionBehavior behavior)
             : this(() =>
             {
                 retry();
@@ -44,11 +48,7 @@ namespace Turtle
             }, behavior)
         { }
 
-        public RetryImpl(Func<bool> retry)
-            : this(retry, new RethrowAllExceptionBehavior())
-        { }
-
-        public RetryImpl(Func<bool> retry, IExceptionBehavior behavior)
+        internal RetryImpl(Func<bool> retry, IExceptionBehavior behavior)
         {
             toRetry = retry;
             this.behavior = behavior;
@@ -112,6 +112,13 @@ namespace Turtle
         public RetryImpl MaximumNumberOfTries(int numberOfTries)
         {
             maximumNumberOfTries = numberOfTries;
+
+            return this;
+        }
+
+        public RetryImpl ExceptionBehavior(IExceptionBehavior behavior)
+        {
+            this.behavior = behavior;
 
             return this;
         }
