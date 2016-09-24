@@ -53,9 +53,12 @@ namespace TestApp
                 .MaximumNumberOfTries(2)
                 .Run();
 
+            Retry.This(() => Console.WriteLine("Using a predicate to determine if the try was successful."),
+                    () => true)
+                .Run();
+
             Action a = (() => { Console.WriteLine("extension"); Throws(); });
             a.Retry().MaximumNumberOfTries(10).Run();
-
 
             var tokenSource = new CancellationTokenSource();
             var t = Retry.This(() =>

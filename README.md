@@ -32,6 +32,13 @@ This will repeat the Func<bool> pass in This() every 100ms for a maximum of trie
 
 
 ```C#
+Retry.This(() => Console.WriteLine("Hello"),
+        () => true)
+    .Run();
+This uses a predicate to determine if the try was successful.
+
+
+```C#
 Retry.This(() =>
 {
     Console.WriteLine("Hello");
@@ -47,6 +54,8 @@ Retry.This(() =>
 ```
 This example uses a limited exponential backoff strategy. The time wait between tries increases exponentially.
 
+Different RetryStrategies can be easily created.
+
 
 ```C#  
 var tokenSource = new CancellationTokenSource();
@@ -56,4 +65,4 @@ var t = Retry.This(() =>
     Throws();
 }).RunAsync(tokenSource.Token);
 ```
-It works with Tasks as well.  
+It works with Tasks as well.
