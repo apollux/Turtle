@@ -22,10 +22,11 @@ namespace Turtle.Tests
                 var retry = new RetryImpl(() => callCount += 1);
 
                 // Act
-                retry.Run();
+                var result = retry.Run();
 
                 // Assert
                 Assert.AreEqual(1, callCount);
+                Assert.AreEqual(CompletionState.Success, result);
             }
         }
 
@@ -44,10 +45,11 @@ namespace Turtle.Tests
                 });
 
                 // Act
-                retry.Run();
+                var result = retry.Run();
 
                 // Assert
                 Assert.AreEqual(1, callCount);
+                Assert.AreEqual(CompletionState.Success, result);
             }
         }
 
@@ -65,10 +67,11 @@ namespace Turtle.Tests
                 }, () => true);
 
                 // Act
-                retry.Run();
+                var result = retry.Run();
 
                 // Assert
                 Assert.AreEqual(1, callCount);
+                Assert.AreEqual(CompletionState.Success, result);
             }
         }
 
@@ -87,11 +90,12 @@ namespace Turtle.Tests
                 }));
 
                 // Act
-                retry.MaximumNumberOfTries(5)
+                var result = retry.MaximumNumberOfTries(5)
                      .Run();
 
                 // Assert
                 Assert.AreEqual(5, callCount);
+                Assert.AreEqual(CompletionState.Failed, result);
             }
         }
 
@@ -109,11 +113,12 @@ namespace Turtle.Tests
                 }));
 
                 // Act
-                retry.MaximumNumberOfTries(5)
+                var result = retry.MaximumNumberOfTries(5)
                      .Run();
 
                 // Assert
                 Assert.AreEqual(4, sleepCount);
+                Assert.AreEqual(CompletionState.Failed, result);
             }
         }
 
@@ -137,11 +142,12 @@ namespace Turtle.Tests
                 }));
 
                 // Act
-                retry.MaximumNumberOfTries(5)
+                var result = retry.MaximumNumberOfTries(5)
                      .Run();
 
                 // Assert
                 Assert.AreEqual(3, callCount);
+                Assert.AreEqual(CompletionState.Success, result);
             }
         }
 
@@ -308,7 +314,7 @@ namespace Turtle.Tests
                 Throws();
             });
 
-            retry.ExceptionBehavior(new RethrowAllExceptionBehavior());
+            retry.OnException(new RethrowAllExceptionBehavior());
 
             // Act
             retry.Run();
@@ -331,7 +337,7 @@ namespace Turtle.Tests
                 tryCount += 1;
                 Throws();
             }));
-            retry.ExceptionBehavior(mockedAbortExceptionBehavior.Object);
+            retry.OnException(mockedAbortExceptionBehavior.Object);
 
             // Act
             var result = retry.Run();
