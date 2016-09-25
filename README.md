@@ -8,7 +8,7 @@ A turtle might be slow, but it is determined to get where it wants to be!
 
 ## Examples
 ```C#
-Retry.This(() =>
+var result = Retry.This(() =>
 {
     Console.WriteLine("Hello");
     Throws();
@@ -17,7 +17,7 @@ Retry.This(() =>
 .Run();
 ```
 This will repeat the Action passed in This() every 100ms for a maximum of 5 tries as long as the action throws an exception.
-
+`result` contains the CompletionState. The CompletionState is an enum with the following values: Failed, Aborted, Success.
 
 ```C#
 Retry.This(() =>
@@ -66,3 +66,18 @@ var t = Retry.This(() =>
 }).RunAsync(tokenSource.Token);
 ```
 It works with Tasks as well.
+
+
+## Control behavior based on the exception
+It is possible to define how Turtle.Retry will behave in case of an exception. You can do this by passing an
+implementation of IExceptionBehavior like this:
+```C#
+Retry.This(() => action)
+.OnException(new MyExceptionBehavior()
+.Run();
+```
+This interface is fairly simple. Just implement the OnException method,
+and return the appropriate AfterExceptionBehavior. AfterExceptionBehavior is an enum with the following values:
+Retry, Rethrow, Abort. Retry will result in another try if MaximumNumberOfTries has not been reached yet,
+Abort will stop the Retry process and return CompletionState.Aborted. Retrow instructs Turtle.Retry to rethrow
+the exception and therefore stop the Retry process.
