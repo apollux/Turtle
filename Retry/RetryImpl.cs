@@ -116,7 +116,7 @@ namespace Turtle
             return this;
         }
 
-        public RetryImpl ExceptionBehavior(IExceptionBehavior behavior)
+        public RetryImpl OnException(IExceptionBehavior behavior)
         {
             this.behavior = behavior;
 
