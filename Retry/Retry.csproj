@@ -47,11 +47,13 @@
     <Compile Include="CompletionState.cs" />
     <Compile Include="ConstantWaitTimeRetryStrategy.cs" />
     <Compile Include="IExceptionBehavior.cs" />
+    <Compile Include="InvalidRetryDelayException.cs" />
     <Compile Include="IRetryContext.cs" />
     <Compile Include="LimitedExponentialBackoffRetryStrategy.cs" />
     <Compile Include="RethrowAllExceptionBehavior.cs" />
     <Compile Include="RetryAllExceptionBehavior.cs" />
     <Compile Include="RetryContext.cs" />
+    <Compile Include="RetryException.cs" />
     <Compile Include="RetryExtention.cs" />
     <Compile Include="RetryImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

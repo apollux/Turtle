@@ -224,8 +224,7 @@ namespace Turtle.Tests
                 retry.Using(new ConstantWaitTimeRetryStrategy
                 {
                     RetryDelay = TimeSpan.FromMilliseconds(1337)
-                })
-                     .Run();
+                }).Run();
 
                 // Assert
                 Assert.AreEqual(2, sleepInvokeCounter);
@@ -345,6 +344,44 @@ namespace Turtle.Tests
             // Assert
             Assert.AreEqual(CompletionState.Aborted, result);
             Assert.AreEqual(1, tryCount);
+        }
+
+        private class ReturnNegativeTimeSpanRetryStrategy : RetryStrategyBase
+        {
+            protected override TimeSpan GetRetryDelay(IRetryContext context)
+            {
+                return TimeSpan.MinValue;
+            }
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidRetryDelayException))]
+        public void Run_RetryStrategyProvidesNegativeTimeSpan_ThrowsException()
+        {
+            // Arrange
+            var retry = new RetryImpl((() => Throws()));
+            retry.Using(new ReturnNegativeTimeSpanRetryStrategy());
+
+            // Act
+            retry.Run();
+
+            // Assert
+            // Expected exception
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(AggregateException))]
+        public void RunAsync_RetryStrategyProvidesNegativeTimeSpan_ThrowsException()
+        {
+            // Arrange
+            var retry = new RetryImpl((() => Throws()));
+            retry.Using(new ReturnNegativeTimeSpanRetryStrategy());
+
+            // Act
+            retry.RunAsync().Wait();
+
+            // Assert
+            // Expected exception
         }
 
         private void Throws()

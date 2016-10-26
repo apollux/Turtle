@@ -66,7 +66,7 @@ namespace Turtle
 
                 if (ShouldRetry())
                 {
-                    Thread.Sleep(retryStrategy.NextRetryDelay(context));
+                    Thread.Sleep(NextRetryDelayOrThrowIfNotValid());
                 }
             }
 
@@ -90,7 +90,7 @@ namespace Turtle
 
                 if (ShouldRetry())
                 {
-                    await Task.Delay(retryStrategy.NextRetryDelay(context), token);
+                    await Task.Delay(NextRetryDelayOrThrowIfNotValid(), token);
                 }
             }
 
@@ -148,6 +148,18 @@ namespace Turtle
         {
             return completionState == CompletionState.Failed 
                 && (maximumNumberOfTries <= 0 || context.Count < maximumNumberOfTries);
+        }
+
+        private TimeSpan NextRetryDelayOrThrowIfNotValid()
+        {
+            var nextRetryDelay = retryStrategy.NextRetryDelay(context);
+
+            if (nextRetryDelay < TimeSpan.Zero)
+            {
+                throw new InvalidRetryDelayException();
+            }
+
+            return nextRetryDelay;
         }
     }
 }
