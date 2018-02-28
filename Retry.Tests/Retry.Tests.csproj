@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Turtle.Tests</RootNamespace>
     <AssemblyName>Turtle.Retry.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -40,20 +40,11 @@
       <HintPath>..\packages\Castle.Core.3.3.3\lib\net45\Castle.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
     <Reference Include="Moq, Version=4.5.21.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
       <HintPath>..\packages\Moq.4.5.21\lib\net45\Moq.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="mscorlib.4.0.0.0.Fakes">
-      <HintPath>FakesAssemblies\mscorlib.4.0.0.0.Fakes.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.4.0.0.0.Fakes">
-      <HintPath>FakesAssemblies\System.4.0.0.0.Fakes.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -78,19 +69,13 @@
     <Compile Include="LimitedExponentialBackoffRetryStrategyTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Fakes Include="Fakes\System.fakes" />
-  </ItemGroup>
-  <ItemGroup>
-    <Fakes Include="Fakes\mscorlib.fakes" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Retry\Retry.csproj">
-      <Project>{374292ee-c9b1-480a-b2ba-a8b56efbdaf6}</Project>
+      <Project>{6034fbab-73de-4978-bcea-66033973631a}</Project>
       <Name>Retry</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("Turtle.Retry.Tests")]
 
 namespace Turtle
 {

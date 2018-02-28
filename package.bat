@@ -1,1 +1,1 @@
-NuGet.exe pack Retry/Retry.csproj -Prop Configuration=Release -Build
+dotnet pack -c Release -o "%cd%" Retry/Retry.csproj
