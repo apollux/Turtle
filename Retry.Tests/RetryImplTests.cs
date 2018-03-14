@@ -1,270 +1,237 @@
 ﻿using System;
-//using System.Threading.Fakes;
+using System.Threading;
 using System.Threading.Tasks;
-//using System.Threading.Tasks.Fakes;
-//using Microsoft.QualityTools.Testing.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace Turtle.Tests
 {
+    internal class DoNotWaitHandler : IWaitHandler
+    {
+        public int SleepCount { get; private set; }
+
+        public TimeSpan LastSleepAmount { get; private set; }
+
+        public void WaitSync(TimeSpan period)
+        {
+            LastSleepAmount = period;
+            SleepCount += 1;
+        }
+
+        public Task WaitAsync(TimeSpan period, CancellationToken cancelationToken)
+        {
+            LastSleepAmount = period;
+            SleepCount += 1;
+            return Task.CompletedTask;
+        }
+    }
+
     [TestClass]
     public class RetryImplTests
     {
-        /*
+        private DoNotWaitHandler doNotWaitHandler;
+
+        [TestInitialize]
+        public void SetUp()
+        {
+            doNotWaitHandler = new DoNotWaitHandler();
+        }
+
         [TestMethod]
         public void Run_ActionSucceeds_ExecuteOnce()
         {
-            using (ShimsContext.Create())
-            {
-                // Arrange
-                ShimThread.SleepInt32 = i => { };
-                var callCount = 0;
-                var retry = new RetryImpl(() => callCount += 1);
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl(() => callCount += 1, new RethrowAllExceptionBehavior(), doNotWaitHandler);
 
-                // Act
-                var result = retry.Run();
+            // Act
+            var result = retry.Run();
 
-                // Assert
-                Assert.AreEqual(1, callCount);
-                Assert.AreEqual(CompletionState.Success, result);
-            }
+            // Assert
+            Assert.AreEqual(1, callCount);
+            Assert.AreEqual(CompletionState.Success, result);
         }
 
         [TestMethod]
         public void Run_FuncSucceeds_ExecuteOnce()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl(() =>
             {
-                // Arrange
-                ShimThread.SleepInt32 = i => { };
-                var callCount = 0;
-                var retry = new RetryImpl(() =>
-                {
-                    callCount += 1;
-                    return true;
-                });
+                callCount += 1;
+                return true;
+            }, new RethrowAllExceptionBehavior(), doNotWaitHandler);
 
-                // Act
-                var result = retry.Run();
+            // Act
+            var result = retry.Run();
 
-                // Assert
-                Assert.AreEqual(1, callCount);
-                Assert.AreEqual(CompletionState.Success, result);
-            }
+            // Assert
+            Assert.AreEqual(1, callCount);
+            Assert.AreEqual(CompletionState.Success, result);
         }
 
         [TestMethod]
         public void Run_FuncWithPredicateSucceeds_ExecuteOnce()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl(() =>
             {
-                // Arrange
-                ShimThread.SleepInt32 = i => { };
-                var callCount = 0;
-                var retry = new RetryImpl(() =>
-                {
-                    callCount += 1;
-                }, () => true);
+                callCount += 1;
+            }, () => true, new RethrowAllExceptionBehavior(), doNotWaitHandler);
 
-                // Act
-                var result = retry.Run();
+            // Act
+            var result = retry.Run();
 
-                // Assert
-                Assert.AreEqual(1, callCount);
-                Assert.AreEqual(CompletionState.Success, result);
-            }
+            // Assert
+            Assert.AreEqual(1, callCount);
+            Assert.AreEqual(CompletionState.Success, result);
         }
 
         [TestMethod]
         public void MaximumNumberOfTries_ActionKeepsFailing_TriedFiveTimes()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl((() =>
             {
-                // Arrange
-                ShimThread.SleepInt32 = i => { };
-                var callCount = 0;
-                var retry = new RetryImpl((() =>
-                {
-                    callCount += 1;
-                    Throws();
-                }));
+                callCount += 1;
+                Throws();
+            }));
 
-                // Act
-                var result = retry.MaximumNumberOfTries(5)
-                     .Run();
+            // Act
+            var result = retry.MaximumNumberOfTries(5)
+                    .Run();
 
-                // Assert
-                Assert.AreEqual(5, callCount);
-                Assert.AreEqual(CompletionState.Failed, result);
-            }
+            // Assert
+            Assert.AreEqual(5, callCount);
+            Assert.AreEqual(CompletionState.Failed, result);
         }
 
         [TestMethod]
         public void MaximumNumberOfTries_ActionKeepsFailing_SleptFourTimes()
         {
-            using (ShimsContext.Create())
-            {
-                // Arrange
-                var sleepCount = 0;
-                ShimThread.SleepInt32 = i => { sleepCount += 1; };
-                var retry = new RetryImpl((() =>
-                {
-                    Throws();
-                }));
+            // Arrange
+            var retry = new RetryImpl(() => false, new RethrowAllExceptionBehavior(), doNotWaitHandler);
 
-                // Act
-                var result = retry.MaximumNumberOfTries(5)
-                     .Run();
+            // Act
+            var result = retry.MaximumNumberOfTries(5)
+                    .Run();
 
-                // Assert
-                Assert.AreEqual(4, sleepCount);
-                Assert.AreEqual(CompletionState.Failed, result);
-            }
+            // Assert
+            Assert.AreEqual(4, doNotWaitHandler.SleepCount);
+            Assert.AreEqual(CompletionState.Failed, result);
         }
 
         [TestMethod]
         public void MaximumNumberOfTries_ActionSucceedsThirdTime_TriedThreeTimes()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl((() =>
             {
-                // Arrange
-                ShimThread.SleepInt32 = i => { };
-                var callCount = 0;
-                var retry = new RetryImpl((() =>
+                callCount += 1;
+                if (callCount == 3)
                 {
-                    callCount += 1;
-                    if (callCount == 3)
-                    {
-                        return; // success
-                    }
+                    return; // success
+                }
 
-                    Throws();
-                }));
+                Throws();
+            }));
 
-                // Act
-                var result = retry.MaximumNumberOfTries(5)
-                     .Run();
+            // Act
+            var result = retry.MaximumNumberOfTries(5)
+                    .Run();
 
-                // Assert
-                Assert.AreEqual(3, callCount);
-                Assert.AreEqual(CompletionState.Success, result);
-            }
+            // Assert
+            Assert.AreEqual(3, callCount);
+            Assert.AreEqual(CompletionState.Success, result);
         }
 
         [TestMethod]
         public void Using_ActionFails_ThreadSleepCalledWithCorrectValue()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var retry = new RetryImpl(() => Throws(), new RetryAllExceptionBehavior(), doNotWaitHandler);
+
+            // Act
+            retry.Using(new ConstantWaitTimeRetryStrategy
             {
-                // Arrange
-                var argumentPassedToSleep = 0;
-                ShimThread.SleepInt32 = i => argumentPassedToSleep = i;
-                var retry = new RetryImpl(() => Throws());
+                RetryDelay = TimeSpan.FromMilliseconds(1337)
+            })
+                    .MaximumNumberOfTries(2)
+                    .Run();
 
-                // Act
-                retry.Using(new ConstantWaitTimeRetryStrategy
-                {
-                    RetryDelay = TimeSpan.FromMilliseconds(1337)
-                })
-                     .MaximumNumberOfTries(2)
-                     .Run();
-
-                // Assert
-                Assert.AreEqual(1337, argumentPassedToSleep);
-            }
+            // Assert
+            Assert.AreEqual(TimeSpan.FromMilliseconds(1337), doNotWaitHandler.LastSleepAmount);
         }
 
         [TestMethod]
         public void Using_ActionFails_TaskDelayCalledWithCorrectValue()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var retry = new RetryImpl(() => Throws(), new RetryAllExceptionBehavior(), doNotWaitHandler);
+
+            // Act
+            retry.Using(new ConstantWaitTimeRetryStrategy
             {
-                // Arrange
-                var argumentPassedToTaskDelay = new TimeSpan();
-                ShimTask.DelayTimeSpanCancellationToken = (t, c) =>
-                {
-                    argumentPassedToTaskDelay = t;
-                    return Task.CompletedTask;
-                };
-                var retry = new RetryImpl(() => Throws());
+                RetryDelay = TimeSpan.FromMilliseconds(1337)
+            })
+                .MaximumNumberOfTries(2)
+                .RunAsync().Wait();
 
-                // Act
-                retry.Using(new ConstantWaitTimeRetryStrategy
-                {
-                    RetryDelay = TimeSpan.FromMilliseconds(1337)
-                })
-                     .MaximumNumberOfTries(2)
-                     .RunAsync().Wait();
-
-                // Assert
-                Assert.AreEqual(TimeSpan.FromMilliseconds(1337), argumentPassedToTaskDelay);
-            }
+            // Assert
+            Assert.AreEqual(TimeSpan.FromMilliseconds(1337), doNotWaitHandler.LastSleepAmount);
         }
 
         [TestMethod]
         public void Run_ActionSucceedsThirdTime_ThreadSleepCalledTwoTimes()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl(() =>
             {
-                // Arrange
-                var sleepInvokeCounter = 0;
-                var callCount = 0;
-                ShimThread.SleepInt32 = i => sleepInvokeCounter += 1;
-                var retry = new RetryImpl(() =>
+                callCount += 1;
+                if (callCount == 3)
                 {
-                    callCount += 1;
-                    if (callCount == 3)
-                    {
-                        return;
-                    }
-                    Throws();
-                });
+                    return;
+                }
+                Throws();
+            }, new RetryAllExceptionBehavior(), doNotWaitHandler);
 
-                // Act
-                retry.Using(new ConstantWaitTimeRetryStrategy
-                {
-                    RetryDelay = TimeSpan.FromMilliseconds(1337)
-                }).Run();
+            // Act
+            retry.Using(new ConstantWaitTimeRetryStrategy
+            {
+                RetryDelay = TimeSpan.FromMilliseconds(1337)
+            }).Run();
 
-                // Assert
-                Assert.AreEqual(2, sleepInvokeCounter);
-            }
+            // Assert
+            Assert.AreEqual(2, doNotWaitHandler.SleepCount);
         }
 
         [TestMethod]
         public void RunAsync_ActionSucceedsThirdTime_TaskDelayCalledTwoTimes()
         {
-            using (ShimsContext.Create())
+            // Arrange
+            var callCount = 0;
+            var retry = new RetryImpl(() =>
             {
-                // Arrange
-                var taskDelayCallCount = 0;
-                ShimTask.DelayTimeSpanCancellationToken = (t, c) =>
+                callCount += 1;
+                if (callCount == 3)
                 {
-                    taskDelayCallCount += 1;
-                    return Task.CompletedTask;
-                };
+                    return; // success
+                }
 
-                var callCount = 0;
-                var retry = new RetryImpl((() =>
-                {
-                    callCount += 1;
-                    if (callCount == 3)
-                    {
-                        return; // success
-                    }
+                Throws();
+            }, new RetryAllExceptionBehavior(), doNotWaitHandler);
 
-                    Throws();
-                }));
+            // Act
+            retry.RunAsync().Wait();
 
-                // Act
-                retry.RunAsync().Wait();
-
-                // Assert
-                Assert.AreEqual(2, taskDelayCallCount);
-            }
+            // Assert
+            Assert.AreEqual(2, doNotWaitHandler.SleepCount);
         }
-        */
 
         [TestMethod]
         public void Run_TryThrows_BehaviorOnExceptionIsCalled()
@@ -275,7 +242,7 @@ namespace Turtle.Tests
             var retry = new RetryImpl(() =>
             {
                 Throws();
-            }, mockedExceptionBehavior.Object);
+            }, mockedExceptionBehavior.Object, doNotWaitHandler);
             retry.MaximumNumberOfTries(1);
 
             // Act
@@ -294,7 +261,7 @@ namespace Turtle.Tests
             var retry = new RetryImpl(() =>
             {
                 Throws();
-            }, mockedExceptionBehavior.Object);
+            }, mockedExceptionBehavior.Object, doNotWaitHandler);
             retry.MaximumNumberOfTries(1);
 
             // Act

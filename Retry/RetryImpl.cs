@@ -10,6 +10,7 @@ namespace Turtle
     {
         private readonly Func<bool> toRetry;
         private IExceptionBehavior behavior;
+        private readonly IWaitHandler waitHandler;
         private readonly RetryContext context = new RetryContext();
         private int maximumNumberOfTries = 0;
 
@@ -20,40 +21,45 @@ namespace Turtle
 
         private CompletionState completionState;
 
-        public RetryImpl(Action retry)
-            : this(retry, new RetryAllExceptionBehavior())
+        internal RetryImpl(Action retry)
+            : this(retry, new RetryAllExceptionBehavior(), new WaitHandlerImpl())
         { }
 
-        public RetryImpl(Action retry, Func<bool> isDonePredicate)
+        internal RetryImpl(Action retry, Func<bool> isDonePredicate)
             : this(retry, isDonePredicate, new RetryAllExceptionBehavior())
         { }
 
-        public RetryImpl(Func<bool> retry)
-            : this(retry, new RethrowAllExceptionBehavior())
+        internal RetryImpl(Func<bool> retry)
+            : this(retry, new RethrowAllExceptionBehavior(), new WaitHandlerImpl())
         { }
 
-        internal RetryImpl(Action retry, IExceptionBehavior behavior)
+        internal RetryImpl(Action retry, IExceptionBehavior behavior, IWaitHandler waitHandler)
             : this(() =>
             {
                 retry();
                 return true;
 
-            }, behavior)
+            }, behavior, waitHandler)
         { }
 
         internal RetryImpl(Action retry, Func<bool> isDonePredicate, IExceptionBehavior behavior)
+            : this(retry, isDonePredicate, behavior, new WaitHandlerImpl())
+        { }
+
+        internal RetryImpl(Action retry, Func<bool> isDonePredicate, IExceptionBehavior behavior, IWaitHandler waitHandler)
             : this(() =>
             {
                 retry();
                 return isDonePredicate();
 
-            }, behavior)
+            }, behavior, waitHandler)
         { }
 
-        internal RetryImpl(Func<bool> retry, IExceptionBehavior behavior)
+        internal RetryImpl(Func<bool> retry, IExceptionBehavior behavior, IWaitHandler waitHandler)
         {
             toRetry = retry;
             this.behavior = behavior;
+            this.waitHandler = waitHandler;
         }
 
         public CompletionState Run()
@@ -68,7 +74,7 @@ namespace Turtle
 
                 if (ShouldRetry())
                 {
-                    Thread.Sleep(NextRetryDelayOrThrowIfNotValid());
+                    waitHandler.WaitSync(NextRetryDelayOrThrowIfNotValid());
                 }
             }
 
@@ -92,7 +98,7 @@ namespace Turtle
 
                 if (ShouldRetry())
                 {
-                    await Task.Delay(NextRetryDelayOrThrowIfNotValid(), token);
+                    await waitHandler.WaitAsync(NextRetryDelayOrThrowIfNotValid(), token);
                 }
             }
 
